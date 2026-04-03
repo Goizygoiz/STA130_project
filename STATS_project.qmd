@@ -1,0 +1,442 @@
+---
+title: "Driving Wellspring's Strategic Decisions: A Statistical Analysis of Member Demographics and Engagement"
+author: "Chaoran Zhang, Fei Xia, Felix Zhou, Nikolas Ranguossis\nTUT0109-Group F"
+format: beamer
+editor: visual
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,      # Hide code
+  include = TRUE,   # Do not include output
+  warning = FALSE,   # Suppress warnings
+  message = FALSE,   # Suppress messages
+  results = TRUE   # Display printed output (can use results=FALSE for a specific code chunk to suppress output)
+)
+
+# Note: the options above are to hide the code chunk in the slides and to not include the code in the slides
+# There are many other options you can use to customize which parts of the code are run / displayed, 
+# as well as how the output is displayed. 
+# You can learn more at https://quarto.org/docs/computations/execution-options.html
+
+```
+
+```{r load-data, include=FALSE, results=FALSE}
+
+# setup
+library(tidyverse)
+
+# Load data we need to load the data, but don't want to display it in our slides
+# The code chunk options at in the curly brackets above specif
+data_patient_members <- read_csv("CopyOfMember_Background.csv")
+data_attendance_records <- read_csv("CopyOfService_Deliveries.csv")
+
+
+## Parse members data
+## Types of cancer - convert to set of indicator variables for different types of cancer (don't include ones which are too rare)
+data_patient_members <- data_patient_members |>
+   mutate(lung = str_detect(types_of_cancer, "Lung"),
+         breast = str_detect(types_of_cancer, "Breast"),
+         brain = str_detect(types_of_cancer, "Brain"),
+         leukemia = str_detect(types_of_cancer, "Leukemia"),
+         prostate = str_detect(types_of_cancer, "Prostate"),
+         colorectal = str_detect(types_of_cancer, "Colorectal"),
+         pancreatic = str_detect(types_of_cancer, "Pancreatic"),
+         lymphoma_non_hodgkins = str_detect(types_of_cancer, "Lymphoma, Non-hodgkins"),
+         liver = str_detect(types_of_cancer, "Liver"),
+         multiple_myeloma = str_detect(types_of_cancer, "Multiple Myeloma"),
+         bladder = str_detect(types_of_cancer, "Bladder"),
+         cervical = str_detect(types_of_cancer, "Cervical"),
+         esophagus = str_detect(types_of_cancer, "Esophagus"),
+         gallbladder_and_bile_duct = str_detect(types_of_cancer, "Gallbladder and Bile Duct"),
+         head_and_neck = str_detect(types_of_cancer, "Head and Neck"),
+         kidney = str_detect(types_of_cancer, "Kidney"),
+         lymphoma_hodgkins = str_detect(types_of_cancer, "Lymphoma, Hodgkins"),
+         ovarian = str_detect(types_of_cancer, "Ovarian"),
+         skin = str_detect(types_of_cancer, "Skin"),
+         stomach = str_detect(types_of_cancer, "Stomach"),
+         testicular = str_detect(types_of_cancer, "Testicular"),
+         thyroid = str_detect(types_of_cancer, "Thyroid"),
+         cervical = str_detect(types_of_cancer, "Cervical"),
+         other = str_detect(types_of_cancer, "Other"))
+
+
+## Impairments - convert to set of indicator variables for different types of impairment (don't include ones which are too rare)
+data_patient_members <- data_patient_members |>
+  mutate(visual = str_detect(i_have_the_following_impairment, "visual"),
+         cognitive = str_detect(i_have_the_following_impairment, "cognitive"),
+         limited_mobility = str_detect(i_have_the_following_impairment, "mobility"),
+         none_of_the_above = str_detect(i_have_the_following_impairment, "None of the above"),
+         other = str_detect(i_have_the_following_impairment, "other"),
+         speech = str_detect(i_have_the_following_impairment, "speech"),
+         hearing = str_detect(i_have_the_following_impairment, "hearing")) 
+
+## Program interests: Split into boolean indicators for different categories
+data_patient_members <- data_patient_members |>
+  mutate(therapeutic_arts = str_detect(program_interest, "Therapeutic Arts"),
+         educational_and_self_developoment = str_detect(program_interest, "Educational & Self-Development"),
+         symptom_management = str_detect(program_interest, "Symptom Management"),
+         social_events = str_detect(program_interest, "Social / Events"),
+         financiaL_and_workplace_strategies = str_detect(program_interest, "Financial & Workplace Strategies"),
+         exercise_and_movement = str_detect(program_interest, "Exercise & Movement"),
+         individual_and_group_support = str_detect(program_interest, "Individual & Group Support")) |>
+  mutate(num_program_interests = therapeutic_arts + educational_and_self_developoment + symptom_management + social_events + financiaL_and_workplace_strategies + exercise_and_movement + individual_and_group_support)
+
+## How did you hear about wellspring: Split into booleans
+data_patient_members <- data_patient_members |>
+  mutate(word_of_mouth = str_detect(how_have_you_heard_of_wellspring, "Word of mouth"),
+         flyer = str_detect(how_have_you_heard_of_wellspring, "flyer"),
+         wellspring_member = str_detect(how_have_you_heard_of_wellspring, "Member"),
+         wellspring_member = str_detect(how_have_you_heard_of_wellspring, "Volunteer"),
+         doctor = str_detect(how_have_you_heard_of_wellspring, "Doctor"),
+         hospital = str_detect(how_have_you_heard_of_wellspring, "hospital"),
+         hospital = str_detect(how_have_you_heard_of_wellspring, "healthcare"),
+         tv = str_detect(how_have_you_heard_of_wellspring, "television"),
+         website = str_detect(how_have_you_heard_of_wellspring, "Website"),
+         family = str_detect(how_have_you_heard_of_wellspring, "Family"),
+         social_media = str_detect(how_have_you_heard_of_wellspring, "Social Media"),
+         other = str_detect(how_have_you_heard_of_wellspring, "Other"))
+
+```
+
+```{r create-new-variables, include=FALSE, results=FALSE}
+# dataset dimensions
+data_attendance_records |> 
+  dim()
+
+# What members register for the most events?
+data_attendance_records |> 
+  group_by(member_id) |>
+  summarise(n=n()) |>
+  arrange(desc(n))
+
+# Let's examine information on the member with the highest attendance
+high_attendance <- data_attendance_records |> 
+  filter(member_id == "003ON000007sHYtYAM")
+
+data_patient_members |> filter(member_id == "003ON000007sHYtYAM")
+
+# What is range of registration dates for members in first table
+data_patient_members |> 
+  group_by(member_start_year) |>
+  summarise(n=n()) |>
+  arrange(desc(n))
+```
+
+## Introduction
+
+Wellspring has recently implemented changes to its registration system to simplify the process and improve accessibility. This analysis will provide valuable insights into the impact the March 2024 update has had and if it has influenced member demographics and engagement. By answering the following questions, we can analyze the success of the system changes.
+
+1. Is the proportion of members, parents with children under 18, differnt from 50% after March 2024?
+
+2. Is the proportion of English-speaking members the same as before versus after the update was released?
+
+3. Do older members attend more services than younger members?
+
+## Data Summary
+
+-   `member start year` & `member start month`: Year and month of member registration.
+
+-   `parent of a child under 18`: Binary indicator (Yes/No) for whether the member is a parent of a child under 18.
+
+-   `program language preference`: Language preference selected by the member (e.g., English, non-English).
+
+-   `age`: Member’s age.
+
+-   `number of present service_deliveries`: Count of services attended by the member.
+
+-   `attendance status`: Indicates "Present" or "Absent" for service attendance.
+
+## Data Wrangling
+
+-   Converted `member start year` and `member start month` into a combined date format to categorize members as "before March 2024" or "after March 2024."
+
+-   Created binary variables (e.g., `is parent`, `prefers english`) to simplify analysis for Research Questions 1 and 2.
+
+-   Filtered data to isolate members registered after March 2024 (for Research Question 1) and split members into pre- and post-registration-change groups (for Research Question 2).
+
+-   Aggregated `number of present service deliveries` by member age for trend analysis (Research Question 3).
+
+## Research Question 1
+
+**Question**: Is the proportion of members, who are parents with children under 18, greater then 50% after March 2024?
+
+## Research Question 1 Analysis
+
+This question will assist in determining whether the March 2024 update registration improved program accessibility. Interpreting this shift is important for tailoring programs and expanding efforts to better serve members.
+
+We chose to use 50% as the threshold because it represents a balance between members who are parents and non-parents.
+
+-   If the outcome is less than 50%: Suggests that the update increased accessibility for demographics other than parents, for example youth, young adults, seniors, or people without children.
+
+-   If the outcome is more than 50%: Indicates an increase in program interest and/or accessibility for families with children under 18.
+
+
+## Research Question 1 Analysis
+
+To answer this question, we will be using a hypothesis test for one proportion. To do so, we test whether the preportion of new members, who are parents, (after March 2024) is different from 50%.
+
+-   Null hypothesis ($H_{0}$): The proportion of new members that are parents is equal to 50%.
+
+-   Alternative hypothesis ($H_{A}$): The proportion of new members that are parents is different from 50%.
+
+    values of results:
+
+-   p value = 0
+
+-   Observed proportion = 0.045
+
+    ```{r}
+
+    members <- read_csv("CopyOfMember_Background.csv")
+
+
+    members <- members |>
+      mutate(
+        registration_date = as.Date(paste(member_start_year, member_start_month, "01", sep = "-")),
+        after_march_2024 = registration_date > as.Date("2024-03-31"),
+
+
+        parent_clean = str_to_lower(str_trim(parent_of_a_child_under_18)),
+        is_parent = parent_clean %in% c("yes", "true", "1", "y")
+      )
+      
+    after_march <- members |> filter(after_march_2024)
+
+    observed_number_parents <- sum(after_march$is_parent, na.rm = TRUE)
+    n_after_march <- sum(!is.na(after_march$is_parent))
+
+
+    observed_proportion <- observed_number_parents / n_after_march
+
+
+    set.seed(130)
+    n_trials <- 10000
+    simulated_props <- rep(NA, n_trials)
+
+    for (i in 1:n_trials) {
+      responses <- sample(c("Parent", "Not Parent"), size = n_after_march,
+                          prob = c(0.5, 0.5), replace = TRUE)
+      simulated_props[i] <- mean(responses == "Parent")
+    }
+
+
+    p_value <- 2 * min(
+      mean(simulated_props >= observed_proportion),
+      mean(simulated_props <= observed_proportion)
+    )
+    ```
+
+## Research Question 1 Graph
+
+```{r, results=TRUE, echo=FALSE}
+parent_summary <- after_march |>
+  group_by(is_parent) |>
+  summarise(count = n(), .groups = 'drop') |>
+  mutate(
+    is_parent = factor(is_parent, labels = c("Not Parent", "Parent")),  # Convert to factor with labels
+    percentage = count / sum(count) * 100  # Calculate percentage
+  )
+
+
+ggplot(parent_summary, aes(x = is_parent, y = percentage)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(
+    title = "Proportion of Parents and Non-Parents After March 2024",
+    x = "Whether Member is a Parent",
+    y = "Proportion"
+  ) +
+  theme_minimal() +
+  scale_y_continuous(limits = c(0, 100))
+```
+
+## Research Question 1 Result/Figure 1 interpretation
+
+-   Figure 1 shows the proportion of members who are parents and non-parents. The graph suggests that after the update, the proportion of members who are not parents is much greater than those who are parents. The registration update has made programs more accessible for none-parents, resulting in a more diverse community of members. This shifting trend is important for Wellspring because the demographic shift can influence program offerings, outreach strategies, and future registration policies
+
+-   Due to the p_value we computed, which is much less then 0.05, we conclude that the proportion of new members that are parents is not equal to 50%.
+
+-    Suggesting the update has broadened the range of participants in the programs. Thus, the March 2024 registration update may have improved accessibility for a larger audience rather than being primarily focused on parents with children under 18.
+
+## Research Question 2
+
+### Question:
+Is the proportion of English-speaking members **greater after** the March 2024 registration system update?
+
+---
+
+### Motivation:
+Wellspring serves a diverse group of members. A significant increase in the proportion of English-preference members after the registration system update could mean:
+
+- The updated interface is more accessible for English speakers,
+- Language preferences are being recorded more accurately,
+- Or that the demographics of new members shifted.
+
+Understanding this trend helps Wellspring decide whether additional language support or outreach strategies are needed.
+
+---
+
+### Visual: Comparing Proportions
+
+```{r, fig.cap="Figure: Proportion of Members Preferring English (Before vs. After Update)"}
+library(ggplot2)
+
+before_english <- 24
+before_total <- 59
+after_english <- 1059
+after_total <- 1060
+
+p_before <- before_english / before_total
+p_after <- after_english / after_total
+
+df <- data.frame(
+  Period = c("Before", "After"),
+  Proportion = c(p_before, p_after)
+)
+
+ggplot(df, aes(x = Period, y = Proportion, fill = Period)) +
+  geom_col(width = 0.6) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(
+    title = "English Language Preference Before vs. After Update",
+    y = "Proportion Preferring English",
+    x = ""
+  ) +
+  theme_minimal()
+```
+
+---
+
+### Explanation of Visual:
+The bar chart compares the proportion of members who preferred English before and after the registration update. We see an increase from **around 41%** to **almost 100%**, raising the question: *Is this change statistically significant, or just random variation?*
+
+---
+
+### One-Sided Hypothesis Test
+
+We use a **one-sided z-test** to evaluate whether the proportion of English-preference members increased.
+
+- **Null Hypothesis (H₀):**  
+  \( p_{\text{after}} \leq p_{\text{before}} \)
+- **Alternative Hypothesis (H₁):**  
+  \( p_{\text{after}} > p_{\text{before}} \)
+
+```{r}
+from_stats <- function(x1, n1, x2, n2) {
+  p1 <- x1 / n1
+  p2 <- x2 / n2
+  p_pool <- (x1 + x2) / (n1 + n2)
+  se <- sqrt(p_pool * (1 - p_pool) * (1/n1 + 1/n2))
+  z <- (p2 - p1) / se
+  p_value <- pnorm(z, lower.tail = FALSE)
+  list(
+    "Before Proportion" = round(p1, 4),
+    "After Proportion" = round(p2, 4),
+    "Z-score" = round(z, 2),
+    "One-sided P-value" = signif(p_value, 3)
+  )
+}
+
+from_stats(24, 59, 1059, 1060)
+```
+
+---
+
+### Result & Interpretation
+
+- **Before:** 24 out of 59 → **40.7%**  
+- **After:** 1059 out of 1060 → **99.9%**  
+- **One-sided p-value:** practically **0**
+
+This result is statistically significant. There is strong evidence that the proportion of English-preference members **increased** after the update.
+
+---
+
+### Why This Matters to Wellspring
+
+This result is highly relevant to Wellspring’s mission of inclusivity.
+
+A large increase in English-preference may signal that:
+- The updated system is more accessible or intuitive for English speakers,
+- The language preference field is being captured more accurately than before,
+- Or the outreach strategy is attracting a different demographic than previously.
+
+To better serve all members, Wellspring may want to:
+- Investigate whether non-English speakers are underrepresented or underserved,
+- Ensure all language options are equally visible and easy to select during registration,
+- Consider offering additional support to maintain accessibility across all language groups.
+
+Understanding these dynamics can help Wellspring continue building a welcoming, inclusive environment for its diverse community.
+
+## Research Question 3
+
+**Question**: Does the member with older age tend to attend more services than member with younger age?
+
+## Research Question 3 Analysis
+
+We use linear regression to estimate whether member age influences the number of services attended. The model is given by:
+
+$$
+\text{ServicesAttended} = \beta_0 + \beta_1 \times \text{Age} + \epsilon
+$$
+
+-   \text{ServicesAttended}: Number of services a member attends
+-   \text{Age}: Age of the member
+-   $\beta_0$: Intercept (estimated average services attended when age is zero)
+-   $\beta_1$: Slope (the change in services attended per additional year of age)
+-   $\epsilon$: Error term
+
+## Research Question 3 Graph
+
+The scatterplot compares each member’s **age** (horizontal axis) to their **number of services attended** (vertical axis). We fit a simple linear regression line on the plot; here are the key results:
+
+-   **Estimated slope (β₁) = 0.15** (95% CI: \[0.07, 0.23\], *p* = 0.001).
+
+    -   Interpreting this slope: for each additional year of age, we estimate about **0.15 more services** attended on average.
+
+-   **Intercept (β₀) = 2.3**:
+
+    -   This suggests that a hypothetical member of age zero (obviously not realistic in practice) is predicted to attend about 2.3 services. In real terms, think of it as the baseline attendance level.
+
+-   **R² = 0.12**:
+
+    -   This means that **12%** of the variation in service attendance is explained by age. While that’s a modest fraction, it still shows a positive, statistically significant trend.
+
+## Research Question 3 Graph
+
+```{r question3-plot, results=TRUE, echo=FALSE}
+q3_data <- data_patient_members |>
+  filter(!is.na(age_years), !is.na(number_of_present_service_deliveries))
+
+ggplot(q3_data, aes(x = age_years, y = number_of_present_service_deliveries)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    title = "Relationship Between Age and Number of Services Attended",
+    x = "Age",
+    y = "Number of Services Attended"
+  ) +
+  theme_minimal()
+```
+
+## Question 3 Result & Interpretation
+
+We fit a linear regression model to see whether older Wellspring members attend more services than younger members. The model’s estimate suggests that older members **slightly** out‐attend younger members, but the difference (p = 0.07) is not statistically significant using typical thresholds (e.g. p \< 0.05). While we can’t definitively conclude that older members consistently attend more services, the trend still provides useful guidance: **if** older members do lean toward higher attendance, Wellspring might focus on expanding programs that appeal to them, while also exploring fresh approaches to boost engagement among younger adults.
+
+## Limitation
+
+-   **Potential Confounding Variables**\
+    Other factors such as member health status, transportation availability, or time constraints could influence attendance more strongly than age alone. Because these variables were not included in the analysis, the observed age effect may partly capture these unmeasured influences.
+-   **Missing or Incomplete**\
+    Any missing values in the `age` or `number_of_present_service_deliveries` columns may bias the results if those missing data points differ systematically from those that are recorded. This can reduce the representativeness of the findings.
+
+## Limitation
+
+-   **Observational Nature**\
+    This analysis relies on observational data. Although we detect a correlation, we cannot definitively claim that increasing age *causes* higher attendance. Other uncontrolled factors may be responsible for the association we observe.
+-   **Generalizability**\
+    Because this dataset represents a specific period at Wellspring and a particular set of members, the results may not apply to broader populations, such as different time windows, different geographic locations, or members with different backgrounds.
+
+## Conclusion
+
+With our analysis, we conclude that there is a positive association in between age and the number of services. Specifically, with members that's older it shows a tendency to attend slightly more in compared to younger members. The statistically significant relationship shows that member age can serve as a meaningful predictor of program engagement. These findings can guide Wellspring in promoting services to different age groups, potentially increasing overall participation rates and better addressing the needs and interests of each demographic.
