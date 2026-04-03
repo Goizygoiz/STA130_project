@@ -1,6 +1,6 @@
 ---
 title: "Driving Wellspring's Strategic Decisions: A Statistical Analysis of Member Demographics and Engagement"
-author: "Chaoran Zhang, Fei Xia, Felix Zhou, Nikolas Ranguossis\nTUT0109-Group F"
+author: "Chaoran Zhang, Fei Xia, Felix Zhou, Nikolas Rangoussis\nTUT0109-Group F"
 format: beamer
 editor: visual
 ---
